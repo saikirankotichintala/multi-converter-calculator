@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Multi Converter & Calculator</title>
+  <style>
+    body {
+      max-width: 600px;
+      margin: 20px auto;
+      font-family: Arial, sans-serif;
+      background-image: url('https://png.pngtree.com/background/20211215/original/pngtree-cartoon-satellite-ruler-calculator-linear-education-background-picture-image_1458755.jpg');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      color: #222;
+      position: relative;
+      z-index: 1;
+      padding: 20px;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255, 255, 255, 0.85);
+      z-index: -1;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      font-weight: bold;
+      font-style: italic;
+    }
+    label, select, input, button {
+      display: block;
+      margin: 8px 0;
+      font-size: 1rem;
+    }
+    select, input {
+      padding: 6px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 8px 12px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .tab {
+      display: none;
+    }
+    .tab.active {
+      display: block;
+    }
+    nav button {
+      margin: 5px 3px;
+      padding: 8px 16px;
+      font-weight: bold;
+      font-style: italic;
+      cursor: pointer;
+    }
+    #result, #currencyResult, #timeResult {
+      margin-top: 10px;
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Multi Converter & Calculator</h1>
+
+  <nav>
+    <button onclick="showTab('calc')">Calculator</button>
+    <button onclick="showTab('unit')">Unit Converter</button>
+    <button onclick="showTab('currency')">Currency Converter</button>
+    <button onclick="showTab('time')">Time Converter</button>
+  </nav>
+
+  <!-- Calculator Tab -->
+  <div id="calc" class="tab active">
+    <h2>Simple Calculator</h2>
+    <label for="calcInput">Enter expression (e.g. 5+3*2):</label>
+    <input type="text" id="calcInput" placeholder="Enter calculation here" />
+    <button onclick="calculate()">Calculate</button>
+    <div id="result"></div>
+  </div>
+
+  <!-- Unit Converter Tab -->
+  <div id="unit" class="tab">
+    <h2>Unit Converter</h2>
+
+    <label for="unitValue">Value to convert:</label>
+    <input type="number" id="unitValue" placeholder="Enter value" />
+
+    <label for="unitType">Select Unit Type:</label>
+    <select id="unitType" onchange="fillUnits()">
+      <option value="length">Length</option>
+      <option value="weight">Weight</option>
+      <option value="temperature">Temperature</option>
+    </select>
+
+    <label for="unitFrom">From:</label>
+    <select id="unitFrom"></select>
+
+    <label for="unitTo">To:</label>
+    <select id="unitTo"></select>
+
+    <button onclick="convertUnits()">Convert</button>
+
+    <div id="unitResult"></div>
+  </div>
+
+  <!-- Currency Converter Tab -->
+  <div id="currency" class="tab">
+    <h2>Currency Converter</h2>
+    <label for="currencyValue">Amount:</label>
+    <input type="number" id="currencyValue" placeholder="Enter amount" />
+
+    <label for="currencyFrom">From:</label>
+    <select id="currencyFrom"></select>
+
+    <label for="currencyTo">To:</label>
+    <select id="currencyTo"></select>
+
+    <button onclick="convertCurrency()">Convert</button>
+
+    <div id="currencyResult"></div>
+  </div>
+
+  <!-- Time Converter Tab -->
+  <div id="time" class="tab">
+    <h2>Time Converter</h2>
+    <label for="timeValue">Time value:</label>
+    <input type="number" id="timeValue" placeholder="Enter time value" />
+
+    <label for="timeFrom">From:</label>
+    <select id="timeFrom">
+      <option value="hours">Hours</option>
+      <option value="minutes">Minutes</option>
+      <option value="seconds">Seconds</option>
+    </select>
+
+    <label for="timeTo">To:</label>
+    <select id="timeTo">
+      <option value="hours">Hours</option>
+      <option value="minutes">Minutes</option>
+      <option value="seconds">Seconds</option>
+    </select>
+
+    <button onclick="convertTime()">Convert</button>
+
+    <div id="timeResult"></div>
+  </div>
+
+<script>
+  // Tab switching
+  function showTab(id) {
+    var tabs = document.querySelectorAll('.tab');
+    for(var i=0; i<tabs.length; i++) {
+      tabs[i].classList.remove('active');
+    }
+    document.getElementById(id).classList.add('active');
+  }
+
+  // Calculator logic (using eval with caution)
+  function calculate() {
+    var input = document.getElementById('calcInput').value;
+    var res = '';
+    try {
+      // eval can be dangerous if user inputs malicious code
+      res = eval(input);
+      if(res === undefined) res = 'Invalid expression';
+    } catch(e) {
+      res = 'Error in expression';
+    }
+    document.getElementById('result').textContent = 'Result: ' + res;
+  }
+
+  // Unit converter data
+  var unitsData = {
+    length: ['millimeter', 'centimeter', 'meter', 'kilometer', 'inch', 'foot', 'yard', 'mile'],
+    weight: ['milligram', 'gram', 'kilogram', 'ounce', 'pound'],
+    temperature: ['Celsius', 'Fahrenheit', 'Kelvin']
+  };
+
+  // Fill units dropdowns based on type
+  function fillUnits() {
+    var type = document.getElementById('unitType').value;
+    var from = document.getElementById('unitFrom');
+    var to = document.getElementById('unitTo');
+    from.innerHTML = '';
+    to.innerHTML = '';
+    for(var i=0; i<unitsData[type].length; i++) {
+      var option1 = document.createElement('option');
+      option1.value = unitsData[type][i];
+      option1.textContent = unitsData[type][i];
+      from.appendChild(option1);
+      var option2 = document.createElement('option');
+      option2.value = unitsData[type][i];
+      option2.textContent = unitsData[type][i];
+      to.appendChild(option2);
+    }
+  }
+  fillUnits();
+
+  // Unit conversion logic using switch-case
+  function convertUnits() {
+    var val = parseFloat(document.getElementById('unitValue').value);
+    var fromUnit = document.getElementById('unitFrom').value;
+    var toUnit = document.getElementById('unitTo').value;
+    var type = document.getElementById('unitType').value;
+    var result = 0;
+
+    if(isNaN(val)) {
+      document.getElementById('unitResult').textContent = 'Please enter a valid number';
+      return;
+    }
+
+    if(fromUnit === toUnit) {
+      document.getElementById('unitResult').textContent = val + ' ' + toUnit;
+      return;
+    }
+
+    if(type === 'length') {
+      // Convert from fromUnit to meters first
+      var meters = 0;
+      switch(fromUnit) {
+        case 'millimeter': meters = val / 1000; break;
+        case 'centimeter': meters = val / 100; break;
+        case 'meter': meters = val; break;
+        case 'kilometer': meters = val * 1000; break;
+        case 'inch': meters = val * 0.0254; break;
+        case 'foot': meters = val * 0.3048; break;
+        case 'yard': meters = val * 0.9144; break;
+        case 'mile': meters = val * 1609.34; break;
+        default: document.getElementById('unitResult').textContent = 'Invalid unit'; return;
+      }
+      // Convert meters to toUnit
+      switch(toUnit) {
+        case 'millimeter': result = meters * 1000; break;
+        case 'centimeter': result = meters * 100; break;
+        case 'meter': result = meters; break;
+        case 'kilometer': result = meters / 1000; break;
+        case 'inch': result = meters / 0.0254; break;
+        case 'foot': result = meters / 0.3048; break;
+        case 'yard': result = meters / 0.9144; break;
+        case 'mile': result = meters / 1609.34; break;
+        default: document.getElementById('unitResult').textContent = 'Invalid unit'; return;
+      }
+    } else if(type === 'weight') {
+      // Convert from fromUnit to grams first
+      var grams = 0;
+      switch(fromUnit) {
+        case 'milligram': grams = val / 1000; break;
+        case 'gram': grams = val; break;
+        case 'kilogram': grams = val * 1000; break;
+        case 'ounce': grams = val * 28.3495; break;
+        case 'pound': grams = val * 453.592; break;
+        default: document.getElementById('unitResult').textContent = 'Invalid unit'; return;
+      }
+      // Convert grams to toUnit
+      switch(toUnit) {
+        case 'milligram': result = grams * 1000; break;
+        case 'gram': result = grams; break;
+        case 'kilogram': result = grams / 1000; break;
+        case 'ounce': result = grams / 28.3495; break;
+        case 'pound': result = grams / 453.592; break;
+        default: document.getElementById('unitResult').textContent = 'Invalid unit'; return;
+      }
+    } else if(type === 'temperature') {
+      var celsius = 0;
+      // Convert from fromUnit to Celsius
+      switch(fromUnit) {
+        case 'Celsius': celsius = val; break;
+        case 'Fahrenheit': celsius = (val - 32) * 5/9; break;
+        case 'Kelvin': celsius = val - 273.15; break;
+        default: document.getElementById('unitResult').textContent = 'Invalid unit'; return;
+      }
+      // Convert from Celsius to toUnit
+      switch(toUnit) {
+        case 'Celsius': result = celsius; break;
+        case 'Fahrenheit': result = (celsius * 9/5) + 32; break;
+        case 'Kelvin': result = celsius + 273.15; break;
+        default: document.getElementById('unitResult').textContent = 'Invalid unit'; return;
+      }
+    }
+
+    document.getElementById('unitResult').textContent = val + ' ' + fromUnit + ' = ' + result.toFixed(4) + ' ' + toUnit;
+  }
+
+  // Currency Converter data
+  var currencies = ['USD', 'EUR', 'INR', 'GBP', 'JPY'];
+  var rates = {
+    USD: 1,
+    EUR: 0.9,
+    INR: 83,
+    GBP: 0.75,
+    JPY: 135
+  };
+
+  // Fill currency dropdowns
+  function fillCurrency() {
+    var from = document.getElementById('currencyFrom');
+    var to = document.getElementById('currencyTo');
+    from.innerHTML = '';
+    to.innerHTML = '';
+    for(var i=0; i<currencies.length; i++) {
+      var opt1 = document.createElement('option');
+      opt1.value = currencies[i];
+      opt1.textContent = currencies[i];
+      from.appendChild(opt1);
+      var opt2 = document.createElement('option');
+      opt2.value = currencies[i];
+      opt2.textContent = currencies[i];
+      to.appendChild(opt2);
+    }
+  }
+  fillCurrency();
+
+  // Currency conversion function
+  function convertCurrency() {
+    var val = parseFloat(document.getElementById('currencyValue').value);
+    if(isNaN(val)) {
+      document.getElementById('currencyResult').textContent = 'Please enter a valid number';
+      return;
+    }
+
+    var fromC = document.getElementById('currencyFrom').value;
+    var toC = document.getElementById('currencyTo').value;
+
+    if(fromC === toC) {
+      document.getElementById('currencyResult').textContent = val + " " + toC;
+      return;
+    }
+
+    var usdAmount = val / rates[fromC];
+    var result = usdAmount * rates[toC];
+
+    document.getElementById('currencyResult').textContent = val + " " + fromC + " = " + result.toFixed(4) + " " + toC;
+  }
+
+  // Time Converter
+  function convertTime() {
+    var val = parseFloat(document.getElementById('timeValue').value);
+    if(isNaN(val)) {
+      document.getElementById('timeResult').textContent = 'Please enter a valid number';
+      return;
+    }
+
+    var fromT = document.getElementById('timeFrom').value;
+    var toT = document.getElementById('timeTo').value;
+
+    if(fromT === toT) {
+      document.getElementById('timeResult').textContent = val + " " + toT;
+      return;
+    }
+
+    var baseSeconds = 0;
+    switch(fromT) {
+      case 'hours': baseSeconds = val * 3600; break;
+      case 'minutes': baseSeconds = val * 60; break;
+      case 'seconds': baseSeconds = val; break;
+      default: 
+        document.getElementById('timeResult').textContent = 'Invalid unit';
+        return;
+    }
+
+    var result = 0;
+    switch(toT) {
+      case 'hours': result = baseSeconds / 3600; break;
+      case 'minutes': result = baseSeconds / 60; break;
+      case 'seconds': result = baseSeconds; break;
+      default:
+        document.getElementById('timeResult').textContent = 'Invalid unit';
+        return;
+    }
+
+    document.getElementById('timeResult').textContent = val + " " + fromT + " = " + result.toFixed(4) + " " + toT;
+  }
+</script>
+
+</body>
+</html>
+<!-- This HTML file contains a multi-purpose converter and calculator. It includes a simple calculator, unit converter, currency converter, and time converter. The design is responsive and user-friendly, with clear instructions and results display. The JavaScript functions handle the calculations and conversions efficiently. --
